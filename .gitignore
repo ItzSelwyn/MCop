@@ -1,0 +1,55 @@
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# Audio recordings & test dumps (preserve privacy & avoid committing binary media)
+*.wav
+*.mp3
+*.m4a
+*.flac
+*.ogg
+test_capture.wav
+recorded_test.wav
+
+# Meeting session logs & transcripts
+transcript.txt
+*.log
+session_*.txt
+
+# HuggingFace & CTranslate2 Model Caches
+.cache/
+models/
+hf_cache/
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+
+# IDEs & Editor Configurations
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Windows System Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+

@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meeting Copilot</title>
+  <style>
+    :root {
+      --bg: #09090b;
+      --card-bg: #121214;
+      --card-inner: #18181b;
+      --border: #27272a;
+      --border-subtle: #1f1f23;
+      --text: #f4f4f5;
+      --text-secondary: #a1a1aa;
+      --muted: #71717a;
+      --accent: #e4e4e7;
+      --alert-bg: #1c1111;
+      --alert-border: #7f1d1d;
+      --alert-tag: #991b1b;
+      --alert-text: #fca5a5;
+      --success: #22c55e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, -apple-system, Inter, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      font-size: 13px;
+    }
+
+    /* Header */
+    header {
+      padding: 11px 14px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: -0.2px;
+      color: var(--text);
+    }
+
+    .brand-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text);
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      background: var(--card-inner);
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: background-color 0.2s;
+    }
+
+    .status-dot.active {
+      background: var(--success);
+    }
+
+    /* Alert Banner (Toast) */
+    #alert-container {
+      display: none;
+      padding: 11px 12px;
+      margin: 10px 12px 0 12px;
+      background: var(--alert-bg);
+      border: 1px solid var(--alert-border);
+      border-radius: 6px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    #alert-container.group-alert {
+      background: #18140c;
+      border-color: #854d0e;
+    }
+
+    #alert-container.group-alert .alert-tag {
+      background: #b45309;
+      color: #ffffff;
+    }
+
+    #alert-container.group-alert .alert-time,
+    #alert-container.group-alert .alert-reason {
+      color: #fde68a;
+    }
+
+    #alert-container.group-alert .alert-dismiss {
+      color: #fde68a;
+    }
+
+    .alert-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .alert-tag-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .alert-tag {
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 2px 5px;
+      border-radius: 3px;
+      background: var(--alert-tag);
+      color: #ffffff;
+    }
+
+    .alert-time {
+      font-size: 11px;
+      color: var(--alert-text);
+      opacity: 0.8;
+    }
+
+    .alert-quote {
+      font-size: 12.5px;
+      font-weight: 500;
+      color: #ffffff;
+      line-height: 1.4;
+      margin-bottom: 4px;
+    }
+
+    .alert-reason {
+      font-size: 11px;
+      color: var(--alert-text);
+    }
+
+    .alert-dismiss {
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: var(--alert-text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px;
+      opacity: 0.8;
+    }
+
+    .alert-dismiss:hover {
+      opacity: 1;
+    }
+
+    /* Navigation Tabs */
+    .tabs {
+      display: flex;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 0 12px;
+      gap: 4px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      padding: 9px 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      position: relative;
+      transition: color 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-secondary);
+    }
+
+    .tab-btn.active {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .tab-btn.active::after {
+      content: "";
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--text);
+    }
+
+    .tab-count {
+      font-size: 10px;
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      padding: 1px 5px;
+      border-radius: 10px;
+      color: var(--text-secondary);
+    }
+
+    /* Content Area */
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Transcript Stream */
+    #transcript-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .transcript-entry {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 9px 11px;
+      animation: fadeIn 0.15s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(3px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .entry-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      font-size: 11px;
+      color: var(--muted);
+      font-feature-settings: "tnum";
+    }
+
+    .entry-text {
+      color: #e4e4e7;
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+
+    .entry-text .mention-highlight {
+      background: #271414;
+      color: #fca5a5;
+      font-weight: 600;
+      padding: 1px 4px;
+      border-radius: 3px;
+      border: 1px solid #7f1d1d;
+    }
+
+    /* Summary Cards */
+    .summary-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+    }
+
+    .card-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-title svg {
+      color: var(--muted);
+    }
+
+    .bullet-list {
+      list-style-type: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .bullet-list li {
+      position: relative;
+      padding-left: 14px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: #d4d4d8;
+    }
+
+    .bullet-list li::before {
+      content: "-";
+      position: absolute;
+      left: 0;
+      color: var(--muted);
+    }
+
+    /* Action Items */
+    .action-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 12px;
+    }
+
+    .action-item:last-child {
+      border-bottom: none;
+    }
+
+    .action-checkbox {
+      margin-top: 2px;
+      cursor: pointer;
+      accent-color: var(--text-secondary);
+    }
+
+    .action-content {
+      flex: 1;
+      line-height: 1.4;
+      color: #d4d4d8;
+    }
+
+    .action-owner {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 1px 5px;
+      border-radius: 3px;
+      margin-left: 4px;
+    }
+
+    /* Empty States */
+    .empty-state {
+      text-align: center;
+      color: var(--muted);
+      padding: 48px 12px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    /* Footer Action Bar */
+    footer {
+      padding: 9px 12px;
+      background: var(--card-bg);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn {
+      flex: 1;
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 6px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      background: #27272a;
+      color: var(--text);
+      border-color: #3f3f46;
+    }
+
+    .btn svg {
+      opacity: 0.85;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2v20M17 5v14M7 9v6M22 10v4M2 10v4"/>
+        </svg>
+      </div>
+      <span>Meeting Copilot</span>
+    </div>
+    <div class="status-badge" id="conn-badge">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-label">Connecting...</span>
+    </div>
+  </header>
+
+  <!-- High-Priority Attention Alert (Gemma Verified) -->
+  <div id="alert-container">
+    <div class="alert-header">
+      <div class="alert-tag-wrapper">
+        <span class="alert-tag" id="alert-kind">Question</span>
+        <span class="alert-time" id="alert-time">Just now</span>
+      </div>
+      <button class="alert-dismiss" onclick="dismissAlert()" title="Dismiss">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="alert-quote" id="alert-quote">"Selwyn, can you update the ticket?"</div>
+    <div class="alert-reason" id="alert-reason">Direct question addressing you</div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-btn-transcript" onclick="switchTab('transcript')">
+      Live Transcript
+      <span class="tab-count" id="transcript-count">0</span>
+    </button>
+    <button class="tab-btn" id="tab-btn-summary" onclick="switchTab('summary')">
+      Summary & Actions
+    </button>
+  </div>
+
+  <!-- Tab 1: Live Transcript -->
+  <div class="content-area" id="tab-transcript">
+    <div id="transcript-list">
+      <div class="empty-state" id="transcript-empty">
+        Listening to desktop audio...<br>
+        Audio played in Chrome or your meeting will appear here.
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: Rolling Summary & Action Items -->
+  <div class="content-area" id="tab-summary" style="display: none;">
+    <div class="summary-card">
+      <div class="card-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="8" y1="6" x2="21" y2="6"></line>
+          <line x1="8" y1="12" x2="21" y2="12"></line>
+          <line x1="8" y1="18" x2="21" y2="18"></line>
+          <line x1="3" y1="6" x2="3.01" y2="6"></line>
+          <line x1="3" y1="12" x2="3.01" y2="12"></line>
+          <line x1="3" y1="18" x2="3.01" y2="18"></line>
+        </svg>
+        Key Points (<span id="summary-time">--:--</span>)
+      </div>
+      <ul class="bullet-list" id="key-points-list">
+        <li style="color: var(--muted);">Waiting for meeting audio (updates every 60s)...</li>
+      </ul>
+    </div>
+
+    <div class="summary-card">
+      <div class="card-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        Decisions
+      </div>
+      <ul class="bullet-list" id="decisions-list">
+        <li style="color: var(--muted);">No decisions recorded yet.</li>
+      </ul>
+    </div>
+
+    <div class="summary-card">
+      <div class="card-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+          <path d="m9 12 2 2 4-4"></path>
+        </svg>
+        Action Items
+      </div>
+      <div id="actions-list">
+        <div style="color: var(--muted); font-size: 12px;">No pending action items.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Action Bar -->
+  <footer>
+    <button class="btn" onclick="forceSummarize()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+        <path d="M3 3v5h5"/>
+        <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+        <path d="M16 21h5v-5"/>
+      </svg>
+      Summarize
+    </button>
+    <button class="btn" onclick="copyTranscript()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+      </svg>
+      Copy Notes
+    </button>
+    <button class="btn" onclick="clearTranscript()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+      </svg>
+      Clear
+    </button>
+  </footer>
+
+  <script>
+    let ws = null;
+    let transcriptItems = [];
+    let activeTab = "transcript";
+
+    // --- Web Audio Synthesized Chime (100% Offline, No Asset Required) ---
+    function playAlertChime() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = "sine";
+        // Subtle two-tone chime
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+        osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.12);
+
+        gain.gain.setValueAtTime(0.18, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.42);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.45);
+      } catch (err) {
+        console.warn("Chime error:", err);
+      }
+    }
+
+    // --- Tab Switching ---
+    function switchTab(tab) {
+      activeTab = tab;
+      document.getElementById("tab-transcript").style.display = tab === "transcript" ? "flex" : "none";
+      document.getElementById("tab-summary").style.display = tab === "summary" ? "flex" : "none";
+      document.getElementById("tab-btn-transcript").classList.toggle("active", tab === "transcript");
+      document.getElementById("tab-btn-summary").classList.toggle("active", tab === "summary");
+    }
+
+    // --- Alert Management ---
+    function showAlert(alertData) {
+      const container = document.getElementById("alert-container");
+      const isGroup = alertData.kind === "group_question";
+
+      if (isGroup) {
+        container.classList.add("group-alert");
+        document.getElementById("alert-kind").innerText = "QUESTION TO ALL";
+      } else {
+        container.classList.remove("group-alert");
+        document.getElementById("alert-kind").innerText = "DIRECT TO YOU";
+      }
+
+      document.getElementById("alert-time").innerText = alertData.time || "Just now";
+      document.getElementById("alert-quote").innerText = `"${alertData.quote || alertData.text}"`;
+      document.getElementById("alert-reason").innerText = alertData.reason || (isGroup ? "Question addressed to everyone" : "Direct mention detected");
+
+      container.style.display = "block";
+      playAlertChime();
+    }
+
+    function dismissAlert() {
+      document.getElementById("alert-container").style.display = "none";
+    }
+
+    // --- Transcript Rendering ---
+    function appendTranscript(entry) {
+      transcriptItems.push(entry);
+      document.getElementById("transcript-empty")?.remove();
+      document.getElementById("transcript-count").innerText = transcriptItems.length;
+
+      const list = document.getElementById("transcript-list");
+      const div = document.createElement("div");
+      div.className = "transcript-entry";
+
+      let textHtml = entry.text;
+      if (entry.highlight_alias) {
+        const regex = new RegExp(`\\b(${entry.highlight_alias})\\b`, "gi");
+        textHtml = textHtml.replace(regex, `<span class="mention-highlight">$1</span>`);
+      }
+
+      div.innerHTML = `
+        <div class="entry-header">
+          <span>${entry.timestamp || ""}</span>
+          <span>${entry.infer_time ? entry.infer_time + "s" : ""}</span>
+        </div>
+        <div class="entry-text">${textHtml}</div>
+      `;
+
+      list.appendChild(div);
+
+      const area = document.getElementById("tab-transcript");
+      area.scrollTop = area.scrollHeight;
+    }
+
+    // --- Summary Rendering ---
+    function updateSummary(data) {
+      document.getElementById("summary-time").innerText = data.timestamp || "Updated";
+
+      // Key Points
+      const kpList = document.getElementById("key-points-list");
+      if (data.key_points && data.key_points.length > 0) {
+        kpList.innerHTML = data.key_points.map(p => `<li>${p}</li>`).join("");
+      } else {
+        kpList.innerHTML = `<li style="color: var(--muted);">No key points yet.</li>`;
+      }
+
+      // Decisions
+      const decList = document.getElementById("decisions-list");
+      if (data.decisions && data.decisions.length > 0) {
+        decList.innerHTML = data.decisions.map(d => `<li>${d}</li>`).join("");
+      } else {
+        decList.innerHTML = `<li style="color: var(--muted);">No decisions identified yet.</li>`;
+      }
+
+      // Actions
+      const actList = document.getElementById("actions-list");
+      if (data.action_items && data.action_items.length > 0) {
+        actList.innerHTML = data.action_items.map(a => `
+          <div class="action-item">
+            <input type="checkbox" class="action-checkbox">
+            <div class="action-content">
+              ${a.task || a.description || a}
+              ${a.owner ? `<span class="action-owner">${a.owner}</span>` : ""}
+            </div>
+          </div>
+        `).join("");
+      } else {
+        actList.innerHTML = `<div style="color: var(--muted); font-size: 12px;">No pending action items.</div>`;
+      }
+    }
+
+    // --- WebSocket Connection ---
+    function connectWebSocket() {
+      const loc = window.location;
+      const wsUri = (loc.protocol === "https:" ? "wss://" : "ws://") + loc.host + "/ws";
+      ws = new WebSocket(wsUri);
+
+      ws.onopen = () => {
+        document.getElementById("status-dot").classList.add("active");
+        document.getElementById("status-label").innerText = "Live";
+      };
+
+      ws.onclose = () => {
+        document.getElementById("status-dot").classList.remove("active");
+        document.getElementById("status-label").innerText = "Reconnecting...";
+        setTimeout(connectWebSocket, 2000);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === "transcript") {
+            appendTranscript(msg.data);
+          } else if (msg.type === "alert") {
+            showAlert(msg.data);
+          } else if (msg.type === "summary") {
+            updateSummary(msg.data);
+          } else if (msg.type === "init") {
+            if (msg.data.transcript) {
+              msg.data.transcript.forEach(t => appendTranscript(t));
+            }
+            if (msg.data.summary) {
+              updateSummary(msg.data.summary);
+            }
+          }
+        } catch (e) {
+          console.error("WS parse error:", e);
+        }
+      };
+    }
+
+    // --- UI Button Actions ---
+    function forceSummarize() {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ action: "summarize" }));
+      }
+      switchTab("summary");
+    }
+
+    function copyTranscript() {
+      if (transcriptItems.length === 0) {
+        alert("Transcript is empty.");
+        return;
+      }
+      const text = transcriptItems.map(i => `[${i.timestamp}] ${i.text}`).join("\n");
+      navigator.clipboard.writeText(text).then(() => {
+        alert("Transcript copied to clipboard.");
+      });
+    }
+
+    function clearTranscript() {
+      if (confirm("Clear live transcript history?")) {
+        transcriptItems = [];
+        document.getElementById("transcript-list").innerHTML = `
+          <div class="empty-state" id="transcript-empty">
+            Transcript cleared. Listening for new audio...
+          </div>
+        `;
+        document.getElementById("transcript-count").innerText = "0";
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      connectWebSocket();
+    });
+  </script>
+</body>
+</html>
